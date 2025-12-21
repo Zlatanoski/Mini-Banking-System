@@ -18,7 +18,7 @@ public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
 public string Status  { get; set; } = "Completed";
 
 //object reference to the Account class for each of the 2 instances gives us object shortcut to access
-public Account? toAccount { get; set; }
-public Account? fromAccount { get; set; }
+public Account? ToAccount { get; set; }
+public Account? FromAccount { get; set; }
 
 }

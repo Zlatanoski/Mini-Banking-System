@@ -36,9 +36,9 @@ public class AppDbContext : DbContext // DbContext class provided by EF Core // 
             entity.Property(e => e.Amount).HasPrecision(18, 2); // up to 18 digits, max 2 decimal places allowed    
             entity.Property(e => e.Status).HasMaxLength(20);
 
-            entity.HasOne(e => e.toAccount).WithMany(a => a.Transactions).HasForeignKey(e => e.ToAccountId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.ToAccount).WithMany().HasForeignKey(e => e.ToAccountId).OnDelete(DeleteBehavior.Restrict);
                  
-            entity.HasOne(e => e.fromAccount).WithMany(a => a.Transactions).HasForeignKey(e => e.FromAccountId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.FromAccount).WithMany(a => a.Transactions).HasForeignKey(e => e.FromAccountId).OnDelete(DeleteBehavior.Restrict);
 
 
         });
