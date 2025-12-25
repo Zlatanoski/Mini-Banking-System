@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 // we need POST /api/transactions/transfer
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[controller]")] // it removes Controller from TransactionsController and places in this placeholder
 public class TransactionsController : ControllerBase
 {
     
