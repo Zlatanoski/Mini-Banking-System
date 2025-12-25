@@ -1,4 +1,4 @@
-namespace BankingAPI.DTOs.Requests;
+namespace BankingAPI.DTOs.Responses;
 
 public class AccountResponse
 {

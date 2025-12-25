@@ -1,5 +1,6 @@
 using BankingAPI.Data;
 using Microsoft.EntityFrameworkCore;
+using BankingAPI.Services;  
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IAccountService, AccountService>(); // when someone asks for IAccountService give instance of AccountService
+
 
 var app = builder.Build();
 

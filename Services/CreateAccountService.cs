@@ -1,16 +1,17 @@
 
 using BankingAPI.DTOs.Requests;
+using BankingAPI.DTOs.Responses;
 using BankingAPI.Data; 
 using Microsoft.EntityFrameworkCore;
 using BankingAPI.Models;
 namespace BankingAPI.Services;
 
-public class CreateAccountService : IAccountService
+public class AccountService : IAccountService
 {
 
     private readonly AppDbContext _context;
 
-    public CreateAccountService(AppDbContext context)
+    public AccountService(AppDbContext context)
     {
         _context = context;
     }
@@ -62,13 +63,43 @@ public class CreateAccountService : IAccountService
 
      public async Task<List<AccountResponse>> GetAllAccounts()
     {
-        throw new NotImplementedException();
-    }
+        var accounts = await _context.Accounts.ToListAsync();
+                // we receive Account Models we need to convert them to AccountResponse DTO's
+                var response = accounts.Select(account => new AccountResponse
+                {
+                    Id = account.Id,
+                    AccountNumber = account.AccountNumber,
+                    AccountHolderName = account.AccountHolderName,
+                    Balance = account.Balance,
+                    createdAt = account.createdAt,
+                    RowVersion = account.RowVersion
+                }).ToList();
+                return response;    
+                }
     
     public async Task<AccountResponse?> GetAccountById(int id)
     {
-        throw new NotImplementedException();
+        var account = await _context.Accounts.FindAsync(id);
+        if (account == null)
+        {
+            return null;
+        }
+        else
+        {
+            var response = new AccountResponse
+            {
+                Id = account.Id,
+                AccountNumber = account.AccountNumber,
+                AccountHolderName = account.AccountHolderName,
+                Balance = account.Balance,
+                createdAt = account.createdAt,
+                RowVersion = account.RowVersion
+            };
+            return response;
+
+        }
+       
+       
     }
-
-
 }
+
