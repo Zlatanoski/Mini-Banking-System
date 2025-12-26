@@ -16,38 +16,42 @@ public class TransactionService : ITransactionService
 
     public async Task<TransferResponse> TransferMoney(TransferRequest request)
     {   
-        // validate the accounts in the request exist
         var fromAccount = await _context.Accounts.FindAsync(request.FromAccountId);
         var toAccount = await _context.Accounts.FindAsync(request.ToAccountId);
 
-        if(fromAccount == null)
+        if (fromAccount == null)
         {
             throw new Exception("Sender account does not exist.");
         }
-        if(toAccount == null)
+        
+        if (toAccount == null)
         {
             throw new Exception("Recipient account does not exist.");
         }
-        if(request.Amount <= 0)
+        
+        if (request.Amount <= 0)
         {
             throw new Exception("Transfer amount must be greater than zero.");
         }
-        if(fromAccount.Balance < request.Amount)
+        
+        if (fromAccount.Balance < request.Amount)
         {
             throw new Exception("Insufficient funds in the sender's account.");
         }
-        if(request.FromAccountId == request.ToAccountId)
+        
+        if (request.FromAccountId == request.ToAccountId)
         {
             throw new Exception("Cannot transfer to the same account.");
         }
+        
         using var transaction = await _context.Database.BeginTransactionAsync();
+        
         try
         {
-          
             fromAccount.Balance -= request.Amount;
             toAccount.Balance += request.Amount;
 
-            var TransactionRecord = new Transaction
+            var transactionRecord = new Transaction
             {
                 FromAccountId = request.FromAccountId,
                 ToAccountId = request.ToAccountId,
@@ -57,20 +61,20 @@ public class TransactionService : ITransactionService
                 Status = "Completed" 
             };
             
-            _context.Transactions.Add(TransactionRecord);
+            _context.Transactions.Add(transactionRecord);
             await _context.SaveChangesAsync(); 
             await transaction.CommitAsync();
 
             return new TransferResponse
             {
-                TransactionId = TransactionRecord.Id,
+                Success = true,
+                TransactionId = transactionRecord.Id,
                 FromAccountId = fromAccount.Id,
                 ToAccountId = toAccount.Id,
-                Amount = TransactionRecord.Amount,
-                TransactionDate = TransactionRecord.TransactionDate,
-                Success = true,
+                Amount = transactionRecord.Amount,
                 FromAccountNewBalance = fromAccount.Balance,
                 ToAccountNewBalance = toAccount.Balance,
+                TransactionDate = transactionRecord.TransactionDate,
                 Message = "Transfer completed successfully."
             };
         }
@@ -84,163 +88,174 @@ public class TransactionService : ITransactionService
             await transaction.RollbackAsync();
             throw;
         }
-
-       
-       
     }
-     public async Task<TransactionResponse?> GetTransactionById(int id)
+    
+    public async Task<TransactionResponse?> GetTransactionById(int id)
     {
         var transaction = await _context.Transactions.FindAsync(id);
+        
         if (transaction == null)
         {
             return null;
         }
-        else
+        
+        return new TransactionResponse
         {
-            var response = new TransactionResponse
-            {
-                Id = transaction.Id,
-                FromAccountId = transaction.FromAccountId,
-                ToAccountId = transaction.ToAccountId,
-                Amount = transaction.Amount,
-                TransactionDate = transaction.TransactionDate,
-                Description = transaction.Description,
-                Status = transaction.Status
-            };
-            return response;
-        }
+            Id = transaction.Id,
+            FromAccountId = transaction.FromAccountId,
+            ToAccountId = transaction.ToAccountId,
+            Amount = transaction.Amount,
+            TransactionDate = transaction.TransactionDate,
+            Description = transaction.Description,
+            Status = transaction.Status
+        };
     }
     
     public async Task<List<TransactionResponse>> GetTransactionsByAccountId(int accountId)
     {
         var account = await _context.Accounts.FindAsync(accountId);
-        if (account == null){
+        
+        if (account == null)
+        {
             throw new Exception("Account does not exist.");
         }
-        else
+        
+        var transactions = await _context.Transactions
+            .Where(t => t.FromAccountId == accountId || t.ToAccountId == accountId)
+            .OrderByDescending(t => t.TransactionDate)
+            .ToListAsync();
+            
+        var response = transactions.Select(transaction => new TransactionResponse
         {
-            var transactions = await _context.Transactions.Where(t=> t.FromAccountId == accountId || t.ToAccountId == accountId).ToListAsync();
-            var response = transactions.Select(transaction => new TransactionResponse
-            {
-                Id = transaction.Id,
-                FromAccountId = transaction.FromAccountId,
-                ToAccountId = transaction.ToAccountId,
-                Amount = transaction.Amount,
-                TransactionDate = transaction.TransactionDate,
-                Description = transaction.Description,
-                Status = transaction.Status
-            }).ToList();
-            return response;
-        }
+            Id = transaction.Id,
+            FromAccountId = transaction.FromAccountId,
+            ToAccountId = transaction.ToAccountId,
+            Amount = transaction.Amount,
+            TransactionDate = transaction.TransactionDate,
+            Description = transaction.Description,
+            Status = transaction.Status
+        }).ToList();
+        
+        return response;
     }
 
     public async Task<AccountTransactionResponse> Deposit(DepositRequest request)
     {
-        var account = await _context.Accounts.FindAsync(request.ToAccountId);
-        if(account == null)
-        {
-            throw new Exception("Account does not exist.");
-        }
-        if(request.Amount <= 0)
+        if (request.Amount <= 0)
         {
             throw new Exception("Deposit amount must be greater than zero.");
         }
+        
+        var account = await _context.Accounts.FindAsync(request.ToAccountId);
+        
+        if (account == null)
+        {
+            throw new Exception("Account does not exist.");
+        }
+        
         using var transaction = await _context.Database.BeginTransactionAsync();
-
+        
         try
         {
-                account.Balance += request.Amount;
+            account.Balance += request.Amount;
+            
             var transactionRecord = new Transaction
             {
-                FromAccountId = 0, 
+                FromAccountId = null,
                 ToAccountId = request.ToAccountId,
                 Amount = request.Amount,
                 Description = request.Description,
                 TransactionDate = DateTime.UtcNow,
                 Status = "Completed"
             };
+            
             _context.Transactions.Add(transactionRecord);
-            await  _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            
             return new AccountTransactionResponse
             {
+                Success = true,
                 TransactionId = transactionRecord.Id,
                 AccountId = account.Id,
-                newBalance =  account.Balance,
+                newBalance = account.Balance,
                 Amount = (int)transactionRecord.Amount,
                 TransactionDate = transactionRecord.TransactionDate,
                 Message = "Deposit completed successfully."
             };
-
-        }catch (DbUpdateConcurrencyException)  
-        {
-            await transaction.RollbackAsync();  
-            throw new Exception("The account was modified by another user. Please refresh and try again.");
-
-        }catch (Exception)  
-        {   
-            await transaction.RollbackAsync();  
-            throw;
-            
         }
-        
-
+        catch (DbUpdateConcurrencyException)
+        {
+            await transaction.RollbackAsync();
+            throw new Exception("The account was modified by another user. Please refresh and try again.");
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task<AccountTransactionResponse> Withdraw(WithdrawRequest request)
     {
-        var account = await _context.Accounts.FindAsync(request.FromAccountId);
-        if(account == null)
-        {
-            throw new Exception("Account does not exist.");
-        }
-        if(request.Amount <= 0)
+        // Validation
+        if (request.Amount <= 0)
         {
             throw new Exception("Withdrawal amount must be greater than zero.");
         }
-        if(account.Balance < request.Amount)
+        
+        var account = await _context.Accounts.FindAsync(request.FromAccountId);
+        
+        if (account == null)
+        {
+            throw new Exception("Account does not exist.");
+        }
+        
+        if (account.Balance < request.Amount)
         {
             throw new Exception("Insufficient funds in the account.");
         }
+        
         using var transaction = await _context.Database.BeginTransactionAsync();
+        
         try
         {
+            account.Balance -= request.Amount;
             
-                account.Balance -= request.Amount;
             var transactionRecord = new Transaction
             {
-                FromAccountId = request.FromAccountId, 
-                ToAccountId = 0,
+                FromAccountId = request.FromAccountId,
+                ToAccountId = null,
                 Amount = request.Amount,
                 Description = request.Description,
                 TransactionDate = DateTime.UtcNow,
                 Status = "Completed"
             };
+            
             _context.Transactions.Add(transactionRecord);
-            await  _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            
             return new AccountTransactionResponse
             {
+                Success = true,
                 TransactionId = transactionRecord.Id,
                 AccountId = account.Id,
-                newBalance =  account.Balance,
+                newBalance = account.Balance,
                 Amount = (int)transactionRecord.Amount,
                 TransactionDate = transactionRecord.TransactionDate,
                 Message = "Withdrawal completed successfully."
             };
-
         }
-        catch (DbUpdateConcurrencyException)  
+        catch (DbUpdateConcurrencyException)
         {
-            await transaction.RollbackAsync();  
+            await transaction.RollbackAsync();
             throw new Exception("The account was modified by another user. Please refresh and try again.");
-
-        }catch (Exception)  
-        {   
-            await transaction.RollbackAsync();  
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
             throw;
-            
         }
     }
-
-
-
 }

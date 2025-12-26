@@ -53,7 +53,7 @@ public class AccountService : IAccountService
             AccountNumber =  account.AccountNumber,
             AccountHolderName = account.AccountHolderName,
             Balance = account.Balance,
-            createdAt = account.createdAt,
+            createdAt = account.CreatedAt,
             RowVersion = account.RowVersion
         };
 
@@ -71,7 +71,7 @@ public class AccountService : IAccountService
                     AccountNumber = account.AccountNumber,
                     AccountHolderName = account.AccountHolderName,
                     Balance = account.Balance,
-                    createdAt = account.createdAt,
+                    createdAt = account.CreatedAt,
                     RowVersion = account.RowVersion
                 }).ToList();
                 return response;    
@@ -92,7 +92,7 @@ public class AccountService : IAccountService
                 AccountNumber = account.AccountNumber,
                 AccountHolderName = account.AccountHolderName,
                 Balance = account.Balance,
-                createdAt = account.createdAt,
+                createdAt = account.CreatedAt,
                 RowVersion = account.RowVersion
             };
             return response;

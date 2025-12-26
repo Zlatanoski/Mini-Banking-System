@@ -30,6 +30,33 @@ public class TransactionsController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }  
     }
+    [HttpPost("deposit")]
+    public async Task<IActionResult> DepositMoney([FromBody] DepositRequest request)
+    {
+        try
+        {
+            var response = await _transactionService.Deposit(request);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("withdraw")]
+    public async Task<IActionResult> WithdrawMoney([FromBody] WithdrawRequest request)
+    {
+        try
+        {
+            var response = await _transactionService.Withdraw(request);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 
 
 }

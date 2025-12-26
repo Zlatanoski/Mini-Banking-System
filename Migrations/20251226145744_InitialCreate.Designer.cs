@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BankingAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251221191103_InitialCreate")]
+    [Migration("20251226145744_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -39,14 +39,15 @@ namespace BankingAPI.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("BLOB");
-
-                    b.Property<DateTime>("createdAt")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("BLOB")
+                        .HasDefaultValueSql("randomblob(8)");
 
                     b.HasKey("Id");
 
@@ -70,7 +71,7 @@ namespace BankingAPI.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("FromAccountId")
+                    b.Property<int?>("FromAccountId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Status")
@@ -78,7 +79,7 @@ namespace BankingAPI.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ToAccountId")
+                    b.Property<int?>("ToAccountId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("TransactionDate")
@@ -96,16 +97,14 @@ namespace BankingAPI.Migrations
             modelBuilder.Entity("BankingAPI.Models.Transaction", b =>
                 {
                     b.HasOne("BankingAPI.Models.Account", "FromAccount")
-                        .WithMany("Transactions")
+                        .WithMany("FromTransactions")
                         .HasForeignKey("FromAccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BankingAPI.Models.Account", "ToAccount")
-                        .WithMany()
+                        .WithMany("ToTransactions")
                         .HasForeignKey("ToAccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("FromAccount");
 
@@ -114,7 +113,9 @@ namespace BankingAPI.Migrations
 
             modelBuilder.Entity("BankingAPI.Models.Account", b =>
                 {
-                    b.Navigation("Transactions");
+                    b.Navigation("FromTransactions");
+
+                    b.Navigation("ToTransactions");
                 });
 #pragma warning restore 612, 618
         }

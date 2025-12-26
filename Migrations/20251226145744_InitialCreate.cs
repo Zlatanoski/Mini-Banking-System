@@ -20,8 +20,8 @@ namespace BankingAPI.Migrations
                     AccountNumber = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     AccountHolderName = table.Column<string>(type: "TEXT", nullable: false),
                     Balance = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: false),
-                    createdAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    RowVersion = table.Column<byte[]>(type: "BLOB", rowVersion: true, nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "BLOB", rowVersion: true, nullable: false, defaultValueSql: "randomblob(8)")
                 },
                 constraints: table =>
                 {
@@ -34,8 +34,8 @@ namespace BankingAPI.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    ToAccountId = table.Column<int>(type: "INTEGER", nullable: false),
-                    FromAccountId = table.Column<int>(type: "INTEGER", nullable: false),
+                    FromAccountId = table.Column<int>(type: "INTEGER", nullable: true),
+                    ToAccountId = table.Column<int>(type: "INTEGER", nullable: true),
                     Amount = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: false),
                     Description = table.Column<string>(type: "TEXT", nullable: false),
                     TransactionDate = table.Column<DateTime>(type: "TEXT", nullable: false),
